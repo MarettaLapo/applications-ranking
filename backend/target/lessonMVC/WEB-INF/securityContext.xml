@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:sec="http://www.springframework.org/schema/security"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-5.8.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+
+   <context:component-scan base-package="ru.isu.restfirst"/>
+
+    <sec:http use-expressions="true"
+              create-session="stateless"
+              entry-point-ref="ajaxAuthenticationEntryPoint">
+        <sec:csrf disabled="true"/>
+        <sec:cors ref="corsFilter"/>
+        <sec:custom-filter ref="authenticationJwtTokenFilter" before="BASIC_AUTH_FILTER"/>
+
+        <sec:intercept-url pattern="/admin/**" access="hasRole('ROLE_ADMIN')"/>
+        <!--<sec:intercept-url pattern="/api/tasks/**" access="hasRole('ROLE_ADMIN')"/>-->
+        <sec:intercept-url pattern="/**" access="hasAnyRole('ROLE_ANONYMOUS', 'ROLE_USER', 'ROLE_ADMIN')"/>
+
+    </sec:http>
+
+    <sec:authentication-manager alias="authenticationManager">
+        <sec:authentication-provider ref="authenticationProvider"/>
+    </sec:authentication-manager>
+
+<!--    cosrFilter-->
+<!--    <bean id="source" class="org.springframework.web.cors.UrlBasedCorsConfigurationSource">
+        <property name="corsConfigurations">
+            <map>
+                <entry key="/**" value-ref="config"/>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="config" class="org.springframework.web.cors.CorsConfiguration">
+        <property name="allowedOrigins" value="http://localhost:4200"/>
+            <property name="allowedMethods" value="GET, POST, PUT, DELETE, OPTIONS"/>
+            <property name="allowedHeaders" value="Content-Type"/>
+            <property name="allowCredentials" value="false"/>
+            <property name="maxAge" value="3600"/>
+    </bean>-->
+<!--
+    <bean id="corsFilter" class="org.springframework.web.filter.CorsFilter">
+        <constructor-arg ref="source"/>
+    </bean>-->
+
+    <bean id = "authenticationProvider" class="org.springframework.security.authentication.dao.DaoAuthenticationProvider">
+        <property name="userDetailsService" ref="customUserDetailsService"/>
+        <property name="passwordEncoder" ref="passwordEncoder"/>
+    </bean>
+
+    <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+
+    <bean id="ajaxAuthenticationEntryPoint" class="org.springframework.security.web.authentication.Http403ForbiddenEntryPoint" />
+</beans>
